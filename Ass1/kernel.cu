@@ -3,7 +3,7 @@
 
 #include "timer.h"
 
-__host__ __device__ double max(double a, double b) {
+__host__ __device__ double f(double a, double b) {
     return (a > b)? a : b;
 }
 
@@ -11,7 +11,7 @@ __global__ void vecMax_kernel(double* a, double* b, double* c, unsigned int M) {
     // TODO
     int i = blockDim.x*blockIdx.x + threadIdx.x;
     if (i < M) {
-        c[i] = max(a[i], b[i]);
+        c[i] = f(a[i], b[i]);
     }
     //
 }
@@ -51,7 +51,7 @@ void vecMax_gpu(double* a, double* b, double* c, unsigned int M) {
 
     // TODO
     const unsigned int numThreadsPerBlock = 512;
-    const unsigned int numBlocks = (N + numThreadsPerBlock – 1)/numThreadsPerBlock;
+    const unsigned int numBlocks = (M + numThreadsPerBlock – 1)/numThreadsPerBlock;
     vecMax_kernel <<< numBlocks, numThreadsPerBlock >>> (a_d, b_d, c_d, M);
     //
 
