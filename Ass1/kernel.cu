@@ -24,7 +24,9 @@ void vecMax_gpu(double* a, double* b, double* c, unsigned int M) {
     startTime(&timer);
 
     // TODO
-    double* a_d, b_d, c_d;
+    double* a_d;
+    double* b_d;
+    double* c_d;
     cudaMalloc( (void**) &a_d , M*sizeof(double));
     cudaMalloc( (void**) &b_d , M*sizeof(double));
     cudaMalloc( (void**) &c_d , M*sizeof(double));
