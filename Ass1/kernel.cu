@@ -38,8 +38,8 @@ void vecMax_gpu(double* a, double* b, double* c, unsigned int M) {
     startTime(&timer);
 
     // TODO
-    cudaMemCopy(a_d, a, M*sizeof(double), cudaMemcpyHostToDevice);
-    cudaMemCopy(b_d, b, M*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(a_d, a, M*sizeof(double), cudaMemcpyHostToDevice);
+    cudaMemcpy(b_d, b, M*sizeof(double), cudaMemcpyHostToDevice);
     //
 
     cudaDeviceSynchronize();
