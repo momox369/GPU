@@ -6,21 +6,17 @@
 __global__ void mm_kernel(float* A, float* B, float* C, unsigned int M, unsigned int N, unsigned int K) {
 
     // TODO
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // rows = M and cols = K
+    unsigned int row = blockIdx.y*blockDim.y + threadIdx.y;
+    unsigned int col = blockIdx.x*blockDim.x + threadIdx.x;
+    int i = M*row + col;
+    if (row < K && col < M){
+        float sum = 0.0f;
+        for(unsigned int j = 0; j < N; ++j) {
+            sum += A[row*N + j]*B[j*N + col];
+        }
+        C[row*N + col] = sum;
+    }
 
 }
 
@@ -60,9 +56,10 @@ void mm_gpu(float* A, float* B, float* C, unsigned int M, unsigned int N, unsign
     startTime(&timer);
 
     // TODO
+    // C is a MxK matrix
     dim3 numThreadsPerBlock(32, 32);
-    dim3 numBlocks((width + numThreadsPerBlock.x - 1)/numThreadsPerBlock.x, (height + numThreadsPerBlock.y - 1)/numThreadsPerBlock.y);
-    rgb2gray_kernel <<< numBlocks, numThreadsPerBlock >>> (red_d, green_d, blue_d, gray_d, width, height);
+    dim3 numBlocks((M + numThreadsPerBlock.x - 1)/numThreadsPerBlock.x, (K + numThreadsPerBlock.y - 1)/numThreadsPerBlock.y);
+    mm_kernel <<<numBlocks, numThreadsPerBlock>>> (A_d, B_d, C_d, M, N, K);
     //
 
     cudaDeviceSynchronize();
