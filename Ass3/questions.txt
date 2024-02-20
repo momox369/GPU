@@ -6,8 +6,11 @@
     (a) The kernel implemented in the previous assignment (without shared memory
         tiling)
 
-
-
+    Without shared memory, main operations were: sum = sum + A[row*N + j]*B[j*N + col];
+    The variable sum is not loaded from gloabal memory.
+    A[...] and B[...] are two floating points numbers loaded from global memory --> 2 x 4 = 8 bytes
+    2 operations are performed: addition and multiplication
+    => 2/8 = 0.25 operation/byte loaded  
 
 
     (b) The kernel implemented in this assignment (with shared memory tiling)
@@ -29,19 +32,25 @@
     Answer the following questions about occupancy for the kernel implemented
     in this assignment. Show your work.
 
+    "ptxas info: registers/thread: 30
+    shared-memory/block: 8192 bytes smem"
+
     (a) Is occupancy limited by the max blocks/SM?
-
-
-
+    In the Kernel, 30 reg/th * (32 x 32) th/block = 30720 reg/block;
+    64000 reg/SM / 30720 reg/block = 2.083 block/SM.
+    The actual value of block/SM is way too small than the maximum it can accomodate, so it limits occupancy.
 
 
     (b) Is occupancy limited by the max shared-memory/SM?
-
-
+    In the kernel, 8192 shared_mem/block * 32 block/SM = 262144 byte-shared-mem/SM = 256 KB/SM.
+    For NVIDIA Tesla V100, the max shared-memory/SM is 96KB, so it's not limiting the occupency .
 
 
 
     (c) Is occupancy limited by the max registers/SM?
+    For NVIDIA Tesla V100, the max blocks/SM is 64000.
+    In the Kernel, I have 2048 th/SM * 30 reg/th = 61440 register/SM which
+    is less than the maximum, so it does not limit occupancy.
 
 
 

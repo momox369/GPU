@@ -23,6 +23,8 @@ __global__ void mm_tiled_kernel(float* A, float* B, float* C, unsigned int M, un
     float Cvalue = 0.0;
 
     for (int m = 0; m < (N + TILE_DIM - 1)/TILE_DIM; m++) {
+
+        //loading data from gloabal memory to shared memory
         if (m * TILE_DIM + tx < N && row < M) {
             As[ty][tx] = A[row * N + m * TILE_DIM + tx];
         } else {
@@ -35,6 +37,7 @@ __global__ void mm_tiled_kernel(float* A, float* B, float* C, unsigned int M, un
         }
         __syncthreads();
 
+        //computing the result
         for (int k = 0; k < TILE_DIM; k++) {
             Cvalue += As[ty][k] * Bs[k][tx];
         }
