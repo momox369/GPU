@@ -10,13 +10,13 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
 	__shared__ float in_s[IN_TILE_DIM][IN_TILE_DIM];
     int row = threadIdx.y + blockIdx.y * OUT_TILE_DIM -FILTER_RADIUS;
     int col = threadIdx.x + blockIdx.x * OUT_TILE_DIM- FILTER_RADIUS;
-	if((row >=0) &&  (row< height ) && (col>=0) && (col < width ) ) {
+	if((row >=0) && (row< height ) && (col>=0) && (col < width ) ) {
         in_s[threadIdx.y][threadIdx.x]=input[row*width + col];
     }else{
         in_s[threadIdx.y][threadIdx.x]=0.0f;
     }
 	__syncthreads();
-    if(threadIdx.y>=FILTER_RADIUS && threadIdx.y<IN_TILE_DIM-FILTER_RADIUS && threadIdx.x>=FILTER_RADIUS && threadIdx.x< IN_TILE_DIM-FILTER_RADIUS){
+    if((threadIdx.x>=FILTER_RADIUS && threadIdx.x< IN_TILE_DIM - FILTER_RADIUS) && (threadIdx.y>=FILTER_RADIUS && threadIdx.y<IN_TILE_DIM-FILTER_RADIUS)){
 		float sum = 0.0f;
         for(int i = 0; i < FILTER_DIM; i++) {
 			for(int j = 0; j < FILTER_DIM; j++) { 
