@@ -10,40 +10,35 @@ __constant__ float filter_c[FILTER_DIM][FILTER_DIM];
 
 __global__ void convolution_tiled_kernel(float* input, float* output, unsigned int width, unsigned int height) {
 
-    //Bring the input tile to shared memory
-    __shared__ float input_tile[IN_TILE_DIM][IN_TILE_DIM];
-    
-    int in_row = (blockIdx.y * OUT_TILE_DIM) + threadIdx.y - FILTER_RADIUS; 
-    int in_col = (blockIdx.x * OUT_TILE_DIM) + threadIdx.x - FILTER_RADIUS;
+    __shared__ float inputTile[IN_TILE_DIM + FILTER_DIM - 1][IN_TILE_DIM + FILTER_DIM - 1];
 
-    if ((in_row >= 0) && (in_row < height ) && (in_col >= 0) && (in_col < width ) ) {
-        input_tile[threadIdx.y][threadIdx.x] = input[in_row*width + in_col];
+    int row_o = blockIdx.y * OUT_TILE_DIM + threadIdx.y;
+    int col_o = blockIdx.x * OUT_TILE_DIM + threadIdx.x;
+    int row_i = row_o - FILTER_RADIUS;
+    int col_i = col_o - FILTER_RADIUS;
+
+    // Load input tile to shared memory
+    if (row_i >= 0 && row_i < height && col_i >= 0 && col_i < width) {
+        inputTile[threadIdx.y][threadIdx.x] = input[row_i * width + col_i];
     } else {
-        input_tile[threadIdx.y][threadIdx.x] = 0.0f;
+        inputTile[threadIdx.y][threadIdx.x] = 0.0f;  // Boundary condition
     }
-    __syncthreads();
 
-    //Compute filter * input_tile
-    if ((in_row >= FILTER_RADIUS && in_row < height - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < height - FILTER_RADIUS)) { //boundary for computing inner tile
-        if (threadIdx.y >= FILTER_RADIUS && threadIdx.y < OUT_TILE_DIM && threadIdx.x >= FILTER_RADIUS && threadIdx.x < OUT_TILE_DIM) {
-            float sum = 0.0f;
-            for (int filter_row = 0; filter_row < FILTER_DIM; ++filter_row){
-                for (int filter_col = 0; filter_col < FILTER_DIM; ++filter_col){
+    __syncthreads();  // Synchronize threads to make sure all data is loaded into shared memory
 
-                    int out_row = in_row + filter_row - FILTER_DIM;
-                    int out_col = in_col + filter_col - FILTER_DIM;
 
-                    if ((out_row >= 0) && (out_row < height ) && (out_col >= 0) && (out_col < width ) ) {
-                        sum += input_tile[threadIdx.y + filter_row - FILTER_DIM][threadIdx.x + filter_col - FILTER_DIM] * filter_c[filter_row][filter_col];
-                    }
-                }
-            }
-
-            //Store the result
-            output[(blockIdx.y * OUT_TILE_DIM + threadIdx.y) * width + (blockIdx.x * OUT_TILE_DIM + threadIdx.x)] = sum;
-            
+if (threadIdx.y < OUT_TILE_DIM && threadIdx.x < OUT_TILE_DIM) {
+    float sum = 0.0f;
+    for (int filterRow = 0; filterRow < FILTER_DIM; ++filterRow) {
+        for (int filterCol = 0; filterCol < FILTER_DIM; ++filterCol) {
+                sum += filter_c[filterRow][filterCol] * inputTile[threadIdx.y + filterRow][threadIdx.x + filterCol];
+ 
         }
     }
+    if (row_o < height && col_o < width) {
+        output[row_o * width + col_o] = sum;
+    }
+}
 }
 
 void copyFilterToGPU(float filter[][FILTER_DIM]) {
