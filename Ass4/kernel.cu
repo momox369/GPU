@@ -4,7 +4,7 @@
 #include "timer.h"
 
 #define IN_TILE_DIM 32
-#define OUTPUT_TILE_DIM ((IN_TILE_DIM) - 2*(FILTER_RADIUS))
+#define OUT_TILE_DIM ((IN_TILE_DIM) - 2*(FILTER_RADIUS))
 
 __constant__ float filter_c[FILTER_DIM][FILTER_DIM];
 
