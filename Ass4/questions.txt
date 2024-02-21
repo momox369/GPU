@@ -7,8 +7,8 @@
         
 
     (b) What is the total number of ghost cells for the entire input?
-    - (4096*4096) - (4092*4092) = 39552
-        
+    - (4096+2)*(4096+2) - 4092*4092 = 32784
+
 
 (2) Assume we used a rectangular 5x7 filter instead. The convolution is still
     performed on a 4096x4096 input using a 32x32 input tile.
@@ -18,6 +18,6 @@
         
 
     (b) What is the total number of ghost cells for the entire input?
-    - (4096*4096) - (4092*4090) = 31336
+    - (4096+2*2)*(4096+3*2) - 4092*4090 = 31336 ghost cells
         
 

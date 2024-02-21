@@ -27,7 +27,6 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
     //Compute filter * input_tile
     //if ((in_row >= FILTER_RADIUS && in_row < height - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < width - FILTER_RADIUS)) { //boundary for computing inner tile
     if ((in_row >= FILTER_RADIUS && in_row < IN_TILE_DIM - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < IN_TILE_DIM - FILTER_RADIUS)) { //boundary for computing inner tile
-        if (threadIdx.y >= FILTER_RADIUS && threadIdx.y < OUT_TILE_DIM && threadIdx.x >= FILTER_RADIUS && threadIdx.x < OUT_TILE_DIM) {
 
             float sum = 0.0f;
             for(int out_row = 0; out_row < FILTER_DIM; out_row++) {
@@ -39,8 +38,8 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
             if (in_row < height && in_col < width) {
 			    output[in_row*width + in_col] = sum;
             }
-        }
     }
+    
 }
 
 void copyFilterToGPU(float filter[][FILTER_DIM]) {
