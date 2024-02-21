@@ -11,8 +11,8 @@ __constant__ float filter_c[FILTER_DIM][FILTER_DIM];
 __global__ void convolution_tiled_kernel(float* input, float* output, unsigned int width, unsigned int height) {
     //Bring the input tile to shared memory
     __shared__ float input_tile[IN_TILE_DIM][IN_TILE_DIM];
-    int in_row = (blockIdx.y * OUT_TILE_DIM) + threadIdx.y; //should I add -1 here?
-    int in_col = (blockIdx.x * OUT_TILE_DIM) + threadIdx.x;
+    int in_row = (blockIdx.y * OUT_TILE_DIM) + threadIdx.y - 1; //should I add -1 here?
+    int in_col = (blockIdx.x * OUT_TILE_DIM) + threadIdx.x - 1;
 
     //loading
     if ((in_row >= 0) && (in_row < height ) && (in_col >= 0) && (in_col < width ) ) {
