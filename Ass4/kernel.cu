@@ -36,7 +36,7 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
                 } 
             }
        
-            if (row < height && col < width) {
+            if (in_row < height && in_col < width) {
 			    output[row*width + col] = sum;
             }
         }
