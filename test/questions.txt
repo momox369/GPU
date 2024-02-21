@@ -3,21 +3,29 @@
     4096x4096 input using a 5x5 filter and a 32x32 input tile.
 
     (a) What are the dimensions of the output tile?
-    - The output tile is 28x28, since not all the threads participates in computing.
-        
+        input_tile-2*filter_radius=output_tile
+        32 - 2 *2=28
+        since the filter have the same dimensions 
+        then dimensions are (28,28)
 
     (b) What is the total number of ghost cells for the entire input?
-    - (4096*4096) - (4092*4092) = 39552
-        
+        (4096+2*2)^2 -4096^2
+        =32784
 
 (2) Assume we used a rectangular 5x7 filter instead. The convolution is still
     performed on a 4096x4096 input using a 32x32 input tile.
 
     (a) What are the dimensions of the output tile?
-    - (32-2-2)x(32-3-3) => 28x26
-        
+        input_tile.x-2*filter_radius.x=output_tile.x
+        =32-2*2
+        =32-4
+        =28
+        input_tile.y-2*filter_radius.y=output_tile.y
+        =32-2*3
+        =32-6
+        =26
+        (28,26)
 
     (b) What is the total number of ghost cells for the entire input?
-    - (4096*4096) - (4092*4090) = 31336
-        
-
+        (4096+2*2)*(4096+3*2)-4096^2
+        =40984
