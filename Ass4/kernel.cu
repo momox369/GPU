@@ -16,32 +16,29 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
     int in_row = (blockIdx.y * OUT_TILE_DIM) + threadIdx.y - FILTER_RADIUS; 
     int in_col = (blockIdx.x * OUT_TILE_DIM) + threadIdx.x - FILTER_RADIUS;
 
-    if ((in_row >= 0) && (in_row < height ) && (in_col >= 0) && (in_col < width ) ) {
+    if (in_row >= 0 && in_row < height  && in_col >= 0 && in_col < width ) {
         input_tile[threadIdx.y][threadIdx.x] = input[in_row*width + in_col];
-    } else {
+    } 
+    else {
         input_tile[threadIdx.y][threadIdx.x] = 0.0f;
     }
     __syncthreads();
 
     //Compute filter * input_tile
-    if ((in_row >= FILTER_RADIUS && in_row < height - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < height - FILTER_RADIUS)) { //boundary for computing inner tile
+    //if ((in_row >= FILTER_RADIUS && in_row < height - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < width - FILTER_RADIUS)) { //boundary for computing inner tile
+    if ((in_row >= FILTER_RADIUS && in_row < IN_TILE_DIM - FILTER_RADIUS) & (in_col >= FILTER_RADIUS && in_row < IN_TILE_DIM - FILTER_RADIUS)) { //boundary for computing inner tile
         if (threadIdx.y >= FILTER_RADIUS && threadIdx.y < OUT_TILE_DIM && threadIdx.x >= FILTER_RADIUS && threadIdx.x < OUT_TILE_DIM) {
+
             float sum = 0.0f;
-            for (int filter_row = 0; filter_row < FILTER_DIM; ++filter_row){
-                for (int filter_col = 0; filter_col < FILTER_DIM; ++filter_col){
-
-                    int out_row = in_row + filter_row - FILTER_DIM;
-                    int out_col = in_col + filter_col - FILTER_DIM;
-
-                    if ((out_row >= 0) && (out_row < height ) && (out_col >= 0) && (out_col < width ) ) {
-                        sum += input_tile[threadIdx.y + filter_row - FILTER_DIM][threadIdx.x + filter_col - FILTER_DIM] * filter_c[filter_row][filter_col];
-                    }
-                }
+            for(int out_row = 0; out_row < FILTER_DIM; out_row++) {
+			    for(int out_col = 0; out_col < FILTER_DIM; out_col++) { 
+				    sum += filter_c[out_row][out_col] * input_tile[out_row + threadIdx.y - FILTER_RADIUS][out_col + threadIdx.x - FILTER_RADIUS];
+                } 
             }
-
-            //Store the result
-            output[(blockIdx.y * OUT_TILE_DIM + threadIdx.y) * width + (blockIdx.x * OUT_TILE_DIM + threadIdx.x)] = sum;
-            
+       
+            if (row < height && col < width) {
+			    output[row*width + col] = sum;
+            }
         }
     }
 }
