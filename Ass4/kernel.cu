@@ -23,20 +23,20 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
     __syncthreads();
 
     //Compute filter x input_tile
-    float sum = 0.0f;
-    for (int filter_row = 0; filter_row < FILTER_DIM; ++filter_row){
+    // float sum = 0.0f;
+    // for (int filter_row = 0; filter_row < FILTER_DIM; ++filter_row){
 
-        for (int filter_col = 0; filter_col < FILTER_DIM; ++filter_col){
+    //     for (int filter_col = 0; filter_col < FILTER_DIM; ++filter_col){
 
-            int out_row = in_row + filter_row - FILTER_RADIUS;
-            int out_col = in_col + filter_col - FILTER_RADIUS;
+    //         int out_row = in_row + filter_row - FILTER_RADIUS;
+    //         int out_col = in_col + filter_col - FILTER_RADIUS;
 
-            if ((out_row >= 0) && (out_row < height ) && (out_col >= 0) && (out_col < width ) ) {
-                sum += input_tile[threadIdx.y + filter_row - FILTER_RADIUS][threadIdx.x + filter_col - FILTER_RADIUS] * filter_c[filter_row][filter_col];
-            }
-        }
-    }
-    __syncthreads();
+    //         if ((out_row >= 0) && (out_row < height ) && (out_col >= 0) && (out_col < width ) ) {
+    //             sum += input_tile[threadIdx.y + filter_row - FILTER_RADIUS][threadIdx.x + filter_col - FILTER_RADIUS] * filter_c[filter_row][filter_col];
+    //         }
+    //     }
+    // }
+    // __syncthreads();
 
 }
 
