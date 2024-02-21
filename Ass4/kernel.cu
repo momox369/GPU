@@ -33,14 +33,14 @@ __global__ void convolution_tiled_kernel(float* input, float* output, unsigned i
 		float sum = 0.0f;
         for(int i = 0; i < FILTER_DIM; ++i) {
 			for(int j = 0; j < FILTER_DIM; ++j) { 
-				sum += filter_c[i][j] * in_s[i + threadIdx.y - FILTER_RADIUS][j + threadIdx.x - FILTER_RADIUS];
+				sum += filter_c[i][j] * input_tile_s[i + threadIdx.y - FILTER_RADIUS][j + threadIdx.x - FILTER_RADIUS];
             } 
         }
         if(row < height && col < width){
 			output[row * width + col] = sum;
         }
     }
-    
+
 
 
 
