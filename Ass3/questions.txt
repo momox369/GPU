@@ -35,7 +35,7 @@
     "ptxas info: registers/thread: 30
     shared-memory/block: 8192 bytes smem"
 
-    (a) Is occupancy limited by the max blocks/SM?
+    (a) Is occupancy limited by the max blocks/SM?  30 reg/th * 2048 th/SM = 61440
     In the Kernel, 30 reg/th * (32 x 32) th/block = 30720 reg/block;
     64000 reg/SM / 30720 reg/block = 2.083 block/SM.
     The actual value of block/SM is way too small than the maximum it can accomodate, so it limits occupancy.
