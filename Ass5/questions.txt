@@ -7,16 +7,29 @@ performed on global memory for each of the following kernels?
 
 (1) The unoptimized kernel with no privatization in shared memory or thread
     coarsening.
+    -> Each thread load one pixel and store the result atomically.
+    So, max number of atomic operation = max number of threads = 4096*4096 = 16777216
 
     
-
 (2) The kernel with privatization in shared memory but without thread
     coarsening.
-
+    -> Atomic operations are only done for the shared copies.
+    Assuming each block have one copy of the global grid, then
+    max numb of atomic operation = number of private copies * number of bins = 
+    = number of blocks * number of bins 
+    = (Total number of threads) / (number of threads per block)  * Total number of bins
+    = (4096*4096) / 1024   * 256
+    = 4194304
     
 
 (3) The kernel with both privatization in shared memory and thread coarsening
     with a coarsening factor of 64.
+    -> Each 64 input cell are being loaded by one thread
+    For one block, 1024 thread loads 1024*64 = 65536 input cell.
+    So we need (4096*4096)/65536 = 256 blocks.
+    Each block executes 256 atomic operation, so the max number of atomic operation = 
+    = (max number of blocks) * (number of atomic operation per block)
+    = 256 * 256 = 65536
 
     
 

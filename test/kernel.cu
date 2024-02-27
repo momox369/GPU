@@ -1,45 +1,57 @@
+
 #include "common.h"
 #include "timer.h"
-
-#define IN_TILE_DIM 32
-#define OUT_TILE_DIM ((IN_TILE_DIM) - 2*(FILTER_RADIUS))
-
-__constant__ float filter_c[FILTER_DIM][FILTER_DIM];
-
-__global__ void convolution_tiled_kernel(float* input, float* output, unsigned int width, unsigned int height) {
-	__shared__ float in_s[IN_TILE_DIM][IN_TILE_DIM];
-    int row = threadIdx.y + blockIdx.y * OUT_TILE_DIM -FILTER_RADIUS;
-    int col = threadIdx.x + blockIdx.x * OUT_TILE_DIM- FILTER_RADIUS;
-	if((row >=0) && (row< height ) && (col>=0) && (col < width ) ) {
-        in_s[threadIdx.y][threadIdx.x]=input[row*width + col];
-    }else{
-        in_s[threadIdx.y][threadIdx.x]=0.0f;
+#define COARSE_FACTOR 32
+__global__ void histogram_private_kernel(unsigned char* image, unsigned int* bins, unsigned int width, unsigned int height) {
+    __shared__  int  b_s[NUM_BINS];
+    unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
+    if(threadIdx.x<NUM_BINS){
+	b_s[threadIdx.x]=0;
     }
-	__syncthreads();
-    if((threadIdx.x>=FILTER_RADIUS && threadIdx.x< IN_TILE_DIM - FILTER_RADIUS) && (threadIdx.y>=FILTER_RADIUS && threadIdx.y<IN_TILE_DIM-FILTER_RADIUS)){
-		float sum = 0.0f;
-        for(int i = 0; i < FILTER_DIM; i++) {
-			for(int j = 0; j < FILTER_DIM; j++) { 
-				sum += filter_c[i][j] * in_s[i+threadIdx.y-FILTER_RADIUS][j+threadIdx.x-FILTER_RADIUS];
-            } 
-        }
-        if(row < height && col < width){
-			output[row*width + col] = sum;
-        }
+    __syncthreads();
+    
+    if(i< width*height) {
+        unsigned char b = image[i];
+        atomicAdd(&b_s[b], 1);
+    }
+    __syncthreads();
+    if(threadIdx.x<NUM_BINS) {
+        atomicAdd(&bins[threadIdx.x], b_s[threadIdx.x]);
     }
 }
 
-void copyFilterToGPU(float filter[][FILTER_DIM]) {
-    // Copy filter to constant memory
-    cudaMemcpyToSymbol(filter_c, filter, FILTER_DIM*FILTER_DIM*sizeof(float));
+void histogram_gpu_private(unsigned char* image_d, unsigned int* bins_d, unsigned int width, unsigned int height) {
 
+    unsigned int numThreadsPerBlock=1024;
+    unsigned int numBlocks=(width*height+numThreadsPerBlock-1)/numThreadsPerBlock;
+    histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d,width,height);
 }
 
-void convolution_tiled_gpu(float* input_d, float* output_d, unsigned int width, unsigned int height) {
+__global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned int* bins, unsigned int width, unsigned int height) {
 
-    // Call kernel
+    __shared__ unsigned int bins_s [NUM_BINS];
+    unsigned int idx = blockIdx.x * blockDim.x * COARSE_FACTOR + threadIdx.x;
 
-    dim3 numThreadsPerBlock(IN_TILE_DIM, IN_TILE_DIM);
-    dim3 numBlocks((width + OUT_TILE_DIM - 1)/OUT_TILE_DIM, (height + OUT_TILE_DIM - 1)/OUT_TILE_DIM);
-    convolution_tiled_kernel <<< numBlocks, numThreadsPerBlock >>> (input_d, output_d, width, height);
+    if ( threadIdx.x < NUM_BINS ) 
+        bins_s[ threadIdx.x ] = 0;
+    
+    __syncthreads();
+
+    for(int i = 0; i < COARSE_FACTOR; ++i) 
+        if (i * blockDim.x + idx < width * height)
+            atomicAdd(&bins_s[image[i * blockDim.x + idx ]], 1);
+
+    __syncthreads();
+
+    if (threadIdx.x < NUM_BINS && bins_s[threadIdx.x] > 0) 
+        atomicAdd(&bins[threadIdx.x], bins_s[threadIdx.x]);
 }
+
+void histogram_gpu_private_coarse(unsigned char* image_d, unsigned int* bins_d, unsigned int width, unsigned int height) {
+
+    unsigned int numThreadsPerBlock=1024;
+    unsigned int numBlocks=(width*height+numThreadsPerBlock-1)/numThreadsPerBlock;
+    histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d,width,height);
+    
+}
+
