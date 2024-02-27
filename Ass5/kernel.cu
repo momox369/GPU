@@ -25,9 +25,9 @@ __global__ void histogram_private_kernel(unsigned char* image, unsigned int* bin
     __syncthreads();
 
      //Commit the non-zero bin counts to the global copy of the histogram in parallel
-    if (i < NUM_BINS) {
-        if (bins_s[i] > 0)  
-            atomicAdd(&bins[i], bins_s[i]);  
+    if (threadIdx.x < NUM_BINS) {
+        if (bins_s[threadIdx.x] > 0)  
+            atomicAdd(&bins[threadIdx.x], bins_s[threadIdx.x]);  
     }
 
 }
