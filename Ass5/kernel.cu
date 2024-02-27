@@ -32,7 +32,7 @@ __global__ void histogram_private_kernel(unsigned char* image, unsigned int* bin
 void histogram_gpu_private(unsigned char* image_d, unsigned int* bins_d, unsigned int width, unsigned int height) {
 
     // TODO
-    int numThreadsPerBlock = 256;
+    int numThreadsPerBlock = 512;
     int numBlocks = (width*height + numThreadsPerBlock - 1)/(numThreadsPerBlock);
     histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d, width, height);
 }
@@ -77,7 +77,7 @@ void histogram_gpu_private_coarse(unsigned char* image_d, unsigned int* bins_d, 
     //Launch the grid (Note: the image has already been copied to global memory
 
     //Set the number of threads per block
-    int numThreadsPerBlock = 256;
+    int numThreadsPerBlock = 512;
     int numBlocks = (width*height + numThreadsPerBlock - 1)/numThreadsPerBlock;
     histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d, width, height);
 }
