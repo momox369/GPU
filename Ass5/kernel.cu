@@ -57,9 +57,9 @@ __global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned i
     //Each thread load multiple pixels based on the COARSENING_FACTOR
     if (i < width * height){   
         for (int k = 0; k < COARSENING_FACTOR; ++k){
-            if (i + k < width * height) {
+            if (i + k*blockDim.x < width * height) {
                 atomicAdd(
-                    &bins_s[image[i + k]], //Each thread load its current pixel up to the COARSENING_FACTOR
+                    &bins_s[image[i + k*blockDim.x]], //Each thread load its current pixel up to the COARSENING_FACTOR
                     1);
             }
         }
