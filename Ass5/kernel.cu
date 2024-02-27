@@ -70,7 +70,7 @@ __global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned i
     //Commit the non-zero bin counts to the global copy of the histogram in parallel
     if (threadIdx.x < NUM_BINS) {
         if (bins_s[threadIdx.x] > 0)  
-            atomicAdd(&bins[i], bins_s[i]);  
+            atomicAdd(&bins[threadIdx.x], bins_s[threadIdx.x]);  
     }
 
 }
