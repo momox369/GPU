@@ -12,7 +12,7 @@ __global__ void histogram_private_kernel(unsigned char* image, unsigned int* bin
     int i = threadIdx.x + blockIdx.x * blockDim.x;
 
     if (i < width * height){
-        bins_s[j] = 0;
+        bins_s[i] = 0;
     }
     __syncthreads();
 
@@ -51,7 +51,7 @@ __global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned i
     //second option: int i = blockIdx.x * blockDim.x * COARSENNING_FACTOR + threadIdx.x;
     
     if (i < width * height){
-        bins_s[j] = 0;
+        bins_s[i] = 0;
     }
     __syncthreads();
 
