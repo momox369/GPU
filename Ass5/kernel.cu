@@ -3,19 +3,20 @@
 
 #include "timer.h"
 
-#define COARSENING_FACTOR 4
+#define COARSENING_FACTOR 16
 
 __global__ void histogram_private_kernel(unsigned char* image, unsigned int* bins, unsigned int width, unsigned int height) {
 
     // TODO
-    __shared__ unsigned int* bins_s;
+    __shared__ unsigned int bins_s[NUM_BINS];
     int i = threadIdx.x + blockIdx.x * blockDim.x;
 
-    if (i < width * height){
+    if (i < NUM_BINS){
         bins_s[i] = 0;
     }
     __syncthreads();
 
+    //Loading pixels and incementing the bins
     if (i < width * height){
         atomicAdd(
             &bins_s[image[i]], //Each thread is loading one pixel here
@@ -24,19 +25,18 @@ __global__ void histogram_private_kernel(unsigned char* image, unsigned int* bin
     __syncthreads();
 
      //Commit the non-zero bin counts to the global copy of the histogram in parallel
-    if (i < width * height) {
-        atomicAdd(
-                &bins[image[i]],
-                bins_s[image[i]]);   //still counted as parallel?
+    if (i < NUM_BINS) {
+        if (bins_s[i] > 0)  
+            atomicAdd(&bins[i], bins_s[i]);  
     }
 
 }
 
-void histogram_gpu_private_(unsigned char* image_d, unsigned int* bins_d, unsigned int width, unsigned int height) {
+void histogram_gpu_private(unsigned char* image_d, unsigned int* bins_d, unsigned int width, unsigned int height) {
 
     // TODO
     int numThreadsPerBlock = 256;
-    int numBlocks = (width*height + numThreadsPerBlock - 1)/(numThreadsPerBlock + COARSENING_FACTOR);
+    int numBlocks = (width*height + numThreadsPerBlock - 1)/(numThreadsPerBlock);
     histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d, width, height);
 }
 
@@ -44,20 +44,19 @@ void histogram_gpu_private_(unsigned char* image_d, unsigned int* bins_d, unsign
 __global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned int* bins, unsigned int width, unsigned int height) {
 
     // TODO
-    __shared__ unsigned int* bins_s;
+    __shared__ unsigned int bins_s[NUM_BINS];
 
     //initialize bin_s to 0s
-    int i = threadIdx.x + blockIdx.x * blockDim.x;
-    //second option: int i = blockIdx.x * blockDim.x * COARSENNING_FACTOR + threadIdx.x;
+    int i = threadIdx.x + blockIdx.x * blockDim.x * COARSENING_FACTOR;
     
-    if (i < width * height){
-        bins_s[i] = 0;
+    if (threadIdx.x < NUM_BINS){
+        bins_s[threadIdx.x] = 0;
     }
     __syncthreads();
 
     //Each thread load multiple pixels based on the COARSENING_FACTOR
-    if ((i < width * height) && (i % COARSENING_FACTOR == 0)){   //ask Dr Izzat about it
-        for (int k = 0; k < COARSENING_FACTOR; k++){
+    if (i < width * height){   
+        for (int k = 0; k < COARSENING_FACTOR; ++k){
             if (i + k < width * height) {
                 atomicAdd(
                     &bins_s[image[i + k]], //Each thread load its current pixel up to the COARSENING_FACTOR
@@ -69,10 +68,9 @@ __global__ void histogram_private_coarse_kernel(unsigned char* image, unsigned i
     //
 
     //Commit the non-zero bin counts to the global copy of the histogram in parallel
-    if (i < width * height){
-        atomicAdd(
-         &bins[image[i]],
-         bins_s[image[i]]);   //still counted as parallel?
+    if (threadIdx.x < NUM_BINS) {
+        if (bins_s[threadIdx.x] > 0)  
+            atomicAdd(&bins[i], bins_s[i]);  
     }
 
 }
@@ -83,7 +81,7 @@ void histogram_gpu_private_coarse(unsigned char* image_d, unsigned int* bins_d, 
     //Launch the grid (Note: the image has already been copied to global memory
 
     //Set the number of threads per block
-    int numThreadsPerBlock = 512;
+    int numThreadsPerBlock = 256;
     int numBlocks = (width*height + numThreadsPerBlock - 1)/numThreadsPerBlock;
     histogram_private_kernel<<<numBlocks, numThreadsPerBlock>>>(image_d, bins_d, width, height);
 
