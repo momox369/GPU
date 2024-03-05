@@ -9,22 +9,30 @@ __global__ void reduce_kernel(float* input, float* sum, unsigned int N) {
     
     //Declaring a shared memory array to store the input
     __shared__ float input_s[BLOCK_DIM];
-    unsigned int i = 2*blockIdx.x * BLOCK_DIM + threadIdx.x;
+    unsigned int segment = 2 * BLOCK_DIM * blockIdx.x;
+    unsigned int i = segment + threadIdx.x;
 
-    if (i < N) 
-        input_s[threadIdx.x] = input[i] ;
-    else input_s[threadIdx.x] = 0.0f;
-    if((i-BLOCK_DIM)<N) 
-        input_s[threadIdx.x] += input[i-BLOCK_DIM] ;
+    //Initialisation
+    if (i < N) {
+        input_s[threadIdx.x] = input[i];
+    } else {
+        input_s[threadIdx.x] = 0.0f;
+    }
+
+    if (i - BLOCK_DIM < N){
+        input_s[threadIdx.x] = input_s[threadIdx.x] + input[i-BLOCK_DIM];
+    }
     __syncthreads();
 
-    for(unsigned int stride = BLOCK_DIM / 2; stride > 0; stride /=2) {
-        if (threadIdx.x >=(BLOCK_DIM- stride) ) 
+    for (unsigned int stride = BLOCK_DIM / 2; stride > 0; stride = stride/2) {
+        if (threadIdx.x >= (BLOCK_DIM - stride)) {
             input_s[threadIdx.x] += input_s[threadIdx.x - stride];
+        } 
         __syncthreads(); 
     }
-    if (threadIdx.x == (BLOCK_DIM-1))
+    if (threadIdx.x == BLOCK_DIM - 1){
         atomicAdd(sum, input_s[BLOCK_DIM - 1]);
+    }
 }
 
 float reduce_gpu(float* input, unsigned int N) {
