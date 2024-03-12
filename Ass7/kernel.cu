@@ -5,7 +5,7 @@
 
 #define BLOCK_DIM 1024
 
-__global__ void scan_kernel(float* input, float* output, float* partialSums, unsigned int N) {
+__global__ void scan_kernel(float* input, float* output, float* partialSums, int N) {
 
     // TODO
     __shared__ float buffer_s[(BLOCK_DIM)*2];
@@ -60,7 +60,7 @@ __global__ void scan_kernel(float* input, float* output, float* partialSums, uns
 
 
 
-__global__ void add_kernel(float* output, float* partialSums, unsigned int N) {
+__global__ void add_kernel(float* output, float* partialSums, int N) {
 
     // TODO
 
